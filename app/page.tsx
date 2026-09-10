@@ -1,5 +1,6 @@
 import EventCard from "@/components/EventCard";
 import { supabase } from "@/lib/supabase";
+import LineUser from "@/components/LineUser";
 
 export default async function Home() {
   const TEST_USER_ID = 1; // change this if Renzo's user id is different
@@ -49,9 +50,9 @@ export default async function Home() {
           🏸 Badminton Sessions
         </h1>
 
-        <p className="mb-6 text-lg text-gray-600">
-          Hello, Renzo!
-        </p>
+        <div className="mb-6">
+          <LineUser />
+        </div>
 
         <div className="space-y-5">
           {events?.map((event) => {

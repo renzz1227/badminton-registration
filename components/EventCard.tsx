@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLineUser } from "@/components/LineUserProvider";
 
 type EventCardProps = {
   id: number;
@@ -38,22 +39,31 @@ export default function EventCard({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPlayers, setShowPlayers] = useState(false);
-
+  const { user, loading: userLoading } = useLineUser();
   async function handleRegister() {
     setLoading(true);
     setMessage("");
 
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          eventId: id,
-          userId: 1, // temporary Renzo user
-        }),
-      });
+      if (!user) {
+        alert("Please log in with LINE first.");
+        return;
+      }
+
+      const response = await fetch(
+        "/api/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            eventId: id,
+            userId: user.id,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -89,14 +99,19 @@ export default function EventCard({
     setMessage("");
 
     try {
+      if (!user) {
+        alert("Please log in with LINE first.");
+        return;
+      }
+      
       const response = await fetch("/api/cancel", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+       body: JSON.stringify({
           eventId: id,
-          userId: 1, // temporary Renzo user
+          userId: user.id,
         }),
       });
 
