@@ -2,9 +2,10 @@ import EventCard from "@/components/EventCard";
 import { supabase } from "@/lib/supabase";
 import LineUser from "@/components/LineUser";
 
-export default async function Home() {
-  const TEST_USER_ID = 1; // change this if Renzo's user id is different
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
+export default async function Home() {
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select("*")
@@ -20,19 +21,20 @@ export default async function Home() {
     );
   }
 
-  const { data: registrations, error: registrationsError } = await supabase
-    .from("registrations")
-    .select(`
-      id,
-      event_id,
-      user_id,
-      status,
-      created_at,
-      users (
-        display_name
-      )
-    `);
-
+  const { data: registrations, error: registrationsError } =
+    await supabase
+      .from("registrations")
+      .select(`
+        id,
+        event_id,
+        user_id,
+        status,
+        created_at,
+        users (
+          display_name
+        )
+      `);
+  console.log("REGISTRATIONS FROM SUPABASE:", registrations);
   if (registrationsError) {
     return (
       <main className="min-h-screen bg-gray-100 p-8">
@@ -63,45 +65,48 @@ export default async function Home() {
                   registration.status !== "cancelled"
               ) ?? [];
 
-            const confirmedCount = eventRegistrations.filter(
-              (registration) => registration.status === "confirmed"
-            ).length;
+            const confirmedRegistrations =
+              eventRegistrations.filter(
+                (registration) =>
+                  registration.status === "confirmed"
+              );
 
-            const waitingCount = eventRegistrations.filter(
-              (registration) => registration.status === "waiting"
-            ).length;
+            const waitingRegistrations =
+              eventRegistrations.filter(
+                (registration) =>
+                  registration.status === "waiting"
+              );
 
-            const players = eventRegistrations
-            .filter(
-              (registration) =>
-                registration.status === "confirmed" ||
-                registration.status === "waiting"
-            )
-            .map((registration) => ({
-              id: registration.id,
-              display_name:
-                registration.users?.[0]?.display_name ?? "Unknown Player",
-              status: registration.status as "confirmed" | "waiting",
-            }));
+            const confirmedCount =
+              confirmedRegistrations.length;
 
-            const myRegistration = eventRegistrations.find(
-              (registration) =>
-                registration.user_id === TEST_USER_ID
+            const waitingCount =
+              waitingRegistrations.length;
+
+            const players = eventRegistrations.map(
+              (registration) => ({
+                id: registration.id,
+                user_id: registration.user_id,
+                display_name:
+                  registration.users?.[0]?.display_name ??
+                  "Unknown Player",
+                status: registration.status as
+                  | "confirmed"
+                  | "waiting",
+              })
             );
 
-            let status:
-              | "available"
-              | "registered"
-              | "waiting"
-              | "full" = "available";
+            const confirmedUserIds =
+              confirmedRegistrations.map(
+                (registration) =>
+                  registration.user_id
+              );
 
-            if (myRegistration?.status === "confirmed") {
-              status = "registered";
-            } else if (myRegistration?.status === "waiting") {
-              status = "waiting";
-            } else if (confirmedCount >= event.capacity) {
-              status = "full";
-            }
+            const waitingUserIds =
+              waitingRegistrations.map(
+                (registration) =>
+                  registration.user_id
+              );
 
             return (
               <EventCard
@@ -115,8 +120,9 @@ export default async function Home() {
                 confirmed={confirmedCount}
                 capacity={event.capacity}
                 waiting={waitingCount}
-                status={status}
                 players={players}
+                confirmedUserIds={confirmedUserIds}
+                waitingUserIds={waitingUserIds}
               />
             );
           })}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLineUser } from "@/components/LineUserProvider";
+import { useRouter } from "next/navigation";
 
 type EventCardProps = {
   id: number;
@@ -13,12 +14,14 @@ type EventCardProps = {
   confirmed: number;
   capacity: number;
   waiting?: number;
-  status?: "available" | "registered" | "waiting" | "full";
   players?: Player[];
+  confirmedUserIds?: number[];
+  waitingUserIds?: number[];
 };
 
 type Player = {
   id: number;
+  user_id: number;
   display_name: string;
   status: "confirmed" | "waiting";
 };
@@ -33,13 +36,34 @@ export default function EventCard({
   confirmed,
   capacity,
   waiting = 0,
-  status = "available",
   players = [],
+  confirmedUserIds = [],
+  waitingUserIds = [],
 }: EventCardProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPlayers, setShowPlayers] = useState(false);
   const { user, loading: userLoading } = useLineUser();
+  const router = useRouter();
+
+  let status:
+  | "available"
+  | "registered"
+  | "waiting"
+  | "full" = "available";
+
+  if (user) {
+    if (confirmedUserIds.includes(user.id)) {
+      status = "registered";
+    } else if (waitingUserIds.includes(user.id)) {
+      status = "waiting";
+    } else if (confirmed >= capacity) {
+      status = "full";
+    }
+  } else if (confirmed >= capacity) {
+    status = "full";
+  }
+
   async function handleRegister() {
     setLoading(true);
     setMessage("");
@@ -78,7 +102,7 @@ export default function EventCard({
         setMessage("Event is full. You were added to the waiting list.");
       }
 
-      window.location.reload();
+      router.refresh();
     } catch {
       setMessage("Something went wrong.");
     } finally {
@@ -124,7 +148,7 @@ export default function EventCard({
 
       setMessage("Registration cancelled.");
 
-      window.location.reload();
+      router.refresh();
     } catch {
       setMessage("Something went wrong.");
     } finally {
