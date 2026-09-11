@@ -34,7 +34,7 @@ export default async function Home() {
           display_name
         )
       `);
-  console.log("REGISTRATIONS FROM SUPABASE:", registrations);
+      
   if (registrationsError) {
     return (
       <main className="min-h-screen bg-gray-100 p-8">
